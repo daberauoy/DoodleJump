@@ -2,8 +2,8 @@
 #include <QDebug>
 #include <QFont>
 #include <QImage>
-#include <QMessageBox>
 #include <QPainter>
+// Removed QMessageBox include
 
 Game::Game(QWidget *parent) : QGraphicsView(parent) {
   scene = new QGraphicsScene(this);
@@ -68,7 +68,6 @@ Game::~Game() {
   }
 }
 
-// NEW: Implementation of the getScore getter
 int Game::getScore() const { return score; }
 
 void Game::resetGame() {
@@ -88,7 +87,7 @@ void Game::resetGame() {
 
   score = 0;
   scoreText->setPlainText("Score: 0");
-  scoreText->setPos(10, 10);
+  scoreText->setPos(10, 10); // Fixed position in the view
 
   createPlatforms();
 
@@ -234,7 +233,7 @@ void Game::keyReleaseEvent(QKeyEvent *event) {
 
 void Game::gameOver() {
   timer->stop();
-  emit gameOverSignal();
+  emit gameOverSignal(score); // MODIFIED: Emit signal with the current score
 }
 
 void Game::restartGame() { resetGame(); }

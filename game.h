@@ -5,12 +5,13 @@
 #include <QGraphicsScene>
 #include <QGraphicsView>
 #include <QKeyEvent>
-#include <QMessageBox> // Include QMessageBox
 #include <QPainter>
 #include <QRandomGenerator>
 #include <QTimer>
 #include <QVector>
 #include <QWidget>
+// Removed QMessageBox as it's no longer directly used by Game class for game
+// over display
 
 class Game : public QGraphicsView {
   Q_OBJECT
@@ -20,15 +21,15 @@ public:
   void keyPressEvent(QKeyEvent *event) override;
   void keyReleaseEvent(QKeyEvent *event) override;
 
-  // NEW: Public getter for the score
-  int getScore() const; // Add this line
+  int getScore() const; // Public getter for the score
 
 public slots:
   void update();
   void restartGame();
 
 signals:
-  void gameOverSignal(); // Signal to notify MainWindow that game is over
+  void gameOverSignal(
+      int finalScore); // MODIFIED: Signal now carries the final score
 
 private:
   QGraphicsScene *scene;
@@ -38,7 +39,7 @@ private:
   bool leftPressed, rightPressed;
   double playerVelocityX, playerVelocityY;
   int cameraY;
-  int score; // This remains private
+  int score;
   QGraphicsTextItem *scoreText;
 
   void createPlatforms();

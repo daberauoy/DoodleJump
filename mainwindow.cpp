@@ -1,79 +1,76 @@
 #include "mainwindow.h"
 #include "game.h"
 #include "ui_mainwindow.h"
-#include <QApplication> // ADD THIS INCLUDE
+#include <QApplication>
 
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent), ui(new Ui::MainWindow),
-      game(nullptr) // Initialize game pointer
+    : QMainWindow(parent), ui(new Ui::MainWindow), game(nullptr),
+      gameEndedOnce(false) // NEW: Initialize flag to false
 {
   ui->setupUi(this);
 
-  // Set up the start menu page
-  ui->stackedWidget->setCurrentIndex(0); // Show the start menu page
+  ui->stackedWidget->setCurrentIndex(0);
 
-  // Connect the start button signal to a slot
   connect(ui->startButton, &QPushButton::clicked, this, &MainWindow::startGame);
+  connect(ui->closeButton, &QPushButton::clicked, qApp, &QApplication::quit);
 
-  // Connect the new close button to the application's quit slot
-  connect(ui->closeButton, &QPushButton::clicked, qApp,
-          &QApplication::quit); // ADD THIS LINE
-
-  // Set fixed size for the main window to match the game size
+  updateMenuUI(); // NEW: Set initial UI state
   setFixedSize(400, 600);
 }
 
 MainWindow::~MainWindow() {
-  // Ensure the game object is deleted when the MainWindow is destroyed
-  // if it hasn't been already.
   delete game;
   delete ui;
 }
 
 void MainWindow::startGame() {
-  // Always create a NEW game instance when starting.
-  // This ensures a clean state for every game.
-  if (game) { // If a previous game instance exists, delete it first.
-    ui->stackedWidget->removeWidget(game); // Remove from stacked widget
-    delete game;                           // Delete the old game instance
-    game = nullptr;                        // Nullify the pointer
+  if (game) {
+    ui->stackedWidget->removeWidget(game);
+    delete game;
+    game = nullptr;
   }
 
-  game = new Game(this); // Create a new game instance
-  ui->stackedWidget->addWidget(
-      game); // Add the new game widget to the stacked widget
-  // Connect the game's gameOverSignal to MainWindow's showGameOverMenu slot
+  game = new Game(this);
+  ui->stackedWidget->addWidget(game);
   connect(game, &Game::gameOverSignal, this, &MainWindow::showGameOverMenu);
 
-  ui->stackedWidget->setCurrentWidget(game); // Switch to the game page
+  ui->stackedWidget->setCurrentWidget(game);
 
-  // Ensure the game view has focus to receive key events
+  gameEndedOnce = false; // NEW: Reset flag when a new game starts
+  updateMenuUI(); // NEW: Update UI for game in progress (hides score, shows
+                  // "Start Game" if not already)
+
   game->setFocus();
 }
 
-void MainWindow::showGameOverMenu() {
-  QMessageBox msgBox(this);
-  msgBox.setWindowTitle("Game Over!");
-  msgBox.setText("Game Over!\nYour Score: " +
-                 QString::number(game->getScore()));
-  msgBox.setStandardButtons(QMessageBox::Retry | QMessageBox::Close);
-  msgBox.setDefaultButton(QMessageBox::Retry);
+void MainWindow::showGameOverMenu(int finalScore) {
+  // Update the label on the start menu page with the final score
+  ui->scoreDisplayLabel->setText("Game Over!\nYour Score: " +
+                                 QString::number(finalScore));
 
-  int ret = msgBox.exec();
+  // Switch back to the start menu page
+  ui->stackedWidget->setCurrentIndex(0);
 
-  if (ret == QMessageBox::Retry) {
-    // If user clicks Retry, call restartGame on the existing game instance
-    game->restartGame();
+  // Clean up the game instance
+  if (game) {
+    ui->stackedWidget->removeWidget(game);
+    delete game;
+    game = nullptr;
+  }
+
+  gameEndedOnce = true; // NEW: Set flag to true as a game has now ended
+  updateMenuUI(); // NEW: Update UI for game over state (shows score, "Restart
+                  // Game" button)
+}
+
+// NEW: Implementation of the UI update logic
+void MainWindow::updateMenuUI() {
+  if (gameEndedOnce) {
+    ui->startButton->setText("Restart Game");
+    ui->scoreDisplayLabel->setVisible(true);
   } else {
-    // If user clicks Close or closes the dialog, switch back to the start menu
-    ui->stackedWidget->setCurrentIndex(0); // Go back to start menu
-
-    // Crucial: Delete the game instance if the user chose to close.
-    // This prevents the issue of trying to restart a "dead" game.
-    if (game) {
-      ui->stackedWidget->removeWidget(game); // Remove from stacked widget
-      delete game;                           // Delete the game instance
-      game = nullptr; // Set to nullptr to indicate no game is active
-    }
+    ui->startButton->setText("Start Game");
+    ui->scoreDisplayLabel->setText(""); // Clear score text if no game ended
+    ui->scoreDisplayLabel->setVisible(false); // Hide score label
   }
 }
