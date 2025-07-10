@@ -2,12 +2,11 @@
 #define GAME_H
 
 #include <QGraphicsPixmapItem>
-#include <QGraphicsProxyWidget> // Add this include for QGraphicsProxyWidget
 #include <QGraphicsScene>
 #include <QGraphicsView>
 #include <QKeyEvent>
+#include <QMessageBox> // Include QMessageBox
 #include <QPainter>
-#include <QPushButton>
 #include <QRandomGenerator>
 #include <QTimer>
 #include <QVector>
@@ -17,13 +16,19 @@ class Game : public QGraphicsView {
   Q_OBJECT
 public:
   Game(QWidget *parent = nullptr);
-  virtual ~Game(); // DECLARATION: The virtual destructor is declared here
+  virtual ~Game();
   void keyPressEvent(QKeyEvent *event) override;
   void keyReleaseEvent(QKeyEvent *event) override;
 
+  // NEW: Public getter for the score
+  int getScore() const; // Add this line
+
 public slots:
   void update();
-  void restartGame(); // New slot for restarting the game
+  void restartGame();
+
+signals:
+  void gameOverSignal(); // Signal to notify MainWindow that game is over
 
 private:
   QGraphicsScene *scene;
@@ -33,17 +38,14 @@ private:
   bool leftPressed, rightPressed;
   double playerVelocityX, playerVelocityY;
   int cameraY;
-  int score;
+  int score; // This remains private
   QGraphicsTextItem *scoreText;
-  QGraphicsTextItem *gameOverText;          // Store Game Over text to hide/show
-  QPushButton *restartButton;               // Store restart button to hide/show
-  QGraphicsProxyWidget *restartButtonProxy; // Store the proxy widget
 
   void createPlatforms();
   void spawnPlatform();
   void checkCollisions();
   void gameOver();
-  void resetGame(); // New private helper to reset game state
+  void resetGame();
 };
 
 #endif // GAME_H

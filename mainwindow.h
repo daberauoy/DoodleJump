@@ -3,6 +3,7 @@
 
 #include "game.h" // Include Game header
 #include <QMainWindow>
+#include <QMessageBox> // Include QMessageBox
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -18,7 +19,8 @@ public:
   ~MainWindow();
 
 private slots:
-  void startGame(); // Slot to handle starting the game
+  void startGame();        // Slot to handle starting the game
+  void showGameOverMenu(); // New slot to show the game over dialog
 
 private:
   Ui::MainWindow *ui;
