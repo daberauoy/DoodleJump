@@ -3,7 +3,6 @@
 #include <QFont>
 #include <QImage>
 #include <QPainter>
-// Removed QMessageBox include
 
 Game::Game(QWidget *parent) : QGraphicsView(parent) {
   scene = new QGraphicsScene(this);
@@ -87,7 +86,9 @@ void Game::resetGame() {
 
   score = 0;
   scoreText->setPlainText("Score: 0");
-  scoreText->setPos(10, 10); // Fixed position in the view
+  // Initial position for score text: X=10 (fixed), Y=10 (fixed relative to
+  // cameraY)
+  scoreText->setPos(10, cameraY + 10); // Use 10 for X, cameraY + 10 for Y
 
   createPlatforms();
 
@@ -200,7 +201,9 @@ void Game::update() {
     score = -cameraY;
     scoreText->setPlainText("Score: " + QString::number(score));
   }
-  scoreText->setPos(cameraY + 10, cameraY + 10);
+  // MODIFIED LINE: X-coordinate is fixed at 10, Y-coordinate is relative to
+  // cameraY
+  scoreText->setPos(10, cameraY + 10);
 
   spawnPlatform();
 
@@ -233,7 +236,7 @@ void Game::keyReleaseEvent(QKeyEvent *event) {
 
 void Game::gameOver() {
   timer->stop();
-  emit gameOverSignal(score); // MODIFIED: Emit signal with the current score
+  emit gameOverSignal(score);
 }
 
 void Game::restartGame() { resetGame(); }
