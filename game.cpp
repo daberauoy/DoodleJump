@@ -110,8 +110,8 @@ void Game::resetGame() {
   }
   platforms.clear();
 
-  // Reset player to a specific starting position
-  player->setPos(185, 450); // Moved player up slightly for better initial view
+  player->setPos(185, 450); // Set player to a fixed start position, Y=450 to
+                            // align with initial platforms
   playerVelocityX = 0;
   playerVelocityY = 0;
   cameraY = 0;
@@ -134,14 +134,15 @@ void Game::createPlatforms() {
   }
   platforms.clear();
 
-  // Create the first platform directly below the player
+  // Create the first platform directly below the player's initial position
+  // Adjusted Y to be precisely where the player would land initially
   QGraphicsRectItem *firstPlatform =
       new QGraphicsRectItem(0, 0, platformWidth, 15);
   firstPlatform->setBrush(Qt::green);
   firstPlatform->setPos(player->x() - (firstPlatform->rect().width() / 2) +
                             (player->boundingRect().width() / 2),
-                        player->y() + player->boundingRect().height() +
-                            5); // A little lower to ensure player lands
+                        player->y() + player->boundingRect().height() -
+                            2); // Minor adjustment for landing
   scene->addItem(firstPlatform);
   platforms.append(firstPlatform);
 
@@ -153,13 +154,42 @@ void Game::createPlatforms() {
         new QGraphicsRectItem(0, 0, platformWidth, 15);
     platform->setBrush(Qt::white);
 
-    int x = QRandomGenerator::global()->bounded(400 - platformWidth);
-    // Place new platforms within a reasonable vertical range
+    // Calculate Y for the new platform
     currentY -= QRandomGenerator::global()->bounded(platformMaxYSpacing -
                                                     platformMinYSpacing) +
                 platformMinYSpacing;
-    platform->setPos(x, currentY);
 
+    // Try to find a non-overlapping X position
+    int x;
+    bool overlapping;
+    const int maxAttempts = 100; // Prevent infinite loop in rare cases
+    int attempts = 0;
+
+    do {
+      overlapping = false;
+      x = QRandomGenerator::global()->bounded(
+          400 - platformWidth); // Generate a new X
+
+      // Check against existing platforms for horizontal overlap at similar Y
+      // levels Only check platforms roughly in the same vertical vicinity
+      for (QGraphicsRectItem *existingPlatform : platforms) {
+        // Check if the existing platform is within a vertical range
+        if (qAbs(existingPlatform->y() - currentY) < platformMaxYSpacing) {
+          QRectF newPlatformRect(x, currentY, platformWidth, 15);
+          QRectF existingPlatformRect =
+              existingPlatform->mapToScene(existingPlatform->rect())
+                  .boundingRect();
+
+          if (newPlatformRect.intersects(existingPlatformRect)) {
+            overlapping = true;
+            break; // Overlap found, try a new X
+          }
+        }
+      }
+      attempts++;
+    } while (overlapping && attempts < maxAttempts);
+
+    platform->setPos(x, currentY);
     scene->addItem(platform);
     platforms.append(platform);
   }
@@ -168,8 +198,6 @@ void Game::createPlatforms() {
 void Game::spawnPlatform() {
   // Remove platforms that have gone too far down (off-screen below the camera)
   for (int i = platforms.size() - 1; i >= 0; --i) {
-    // A platform is "off-screen" if its top edge is below the current camera
-    // view plus a buffer to ensure it's truly gone.
     if (platforms[i]->y() >
         (cameraY + scene->height() + 50)) { // Added 50 pixel buffer
       scene->removeItem(platforms[i]);
@@ -186,17 +214,45 @@ void Game::spawnPlatform() {
         new QGraphicsRectItem(0, 0, platformWidth, 15);
     platform->setBrush(Qt::white);
 
-    int x = QRandomGenerator::global()->bounded(400 - platformWidth);
     // Find the highest platform's Y-coordinate to place new platforms above it
     int highestPlatformY =
-        platforms.isEmpty()
-            ? cameraY
-            : platforms.first()
-                  ->y(); // platforms are sorted by y, highest is first
+        platforms.isEmpty() ? cameraY : platforms.first()->y();
     // Place new platform above the highest existing one, within defined spacing
     int y = highestPlatformY - (QRandomGenerator::global()->bounded(
                                     platformMaxYSpacing - platformMinYSpacing) +
                                 platformMinYSpacing);
+
+    // Try to find a non-overlapping X position
+    int x;
+    bool overlapping;
+    const int maxAttempts = 100; // Prevent infinite loop in rare cases
+    int attempts = 0;
+
+    do {
+      overlapping = false;
+      x = QRandomGenerator::global()->bounded(
+          400 - platformWidth); // Generate a new X
+
+      // Check against existing platforms for horizontal overlap at similar Y
+      // levels Only check platforms roughly in the same vertical vicinity
+      for (QGraphicsRectItem *existingPlatform : platforms) {
+        // Check if the existing platform is within a vertical range where
+        // overlap is possible
+        if (qAbs(existingPlatform->y() - y) <
+            platformMaxYSpacing) { // Use platformMaxYSpacing as a general range
+          QRectF newPlatformRect(x, y, platformWidth, 15);
+          QRectF existingPlatformRect =
+              existingPlatform->mapToScene(existingPlatform->rect())
+                  .boundingRect();
+
+          if (newPlatformRect.intersects(existingPlatformRect)) {
+            overlapping = true;
+            break; // Overlap found, try a new X
+          }
+        }
+      }
+      attempts++;
+    } while (overlapping && attempts < maxAttempts);
 
     platform->setPos(x, y);
 
