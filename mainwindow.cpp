@@ -9,6 +9,15 @@ MainWindow::MainWindow(QWidget *parent)
       gameEndedOnce(false) {
   ui->setupUi(this);
 
+  // === MODIFICATION START ===
+  // Hide the status bar to prevent it from appearing as a "line" at the bottom
+  if (ui->statusbar) {
+    ui->statusbar->hide();
+    // Alternatively, to remove it completely from the QMainWindow:
+    // setStatusBar(nullptr);
+  }
+  // === MODIFICATION END ===
+
   ui->stackedWidget->setCurrentIndex(0);
 
   // Connect startButton to startGame, reading difficulty from ComboBox
