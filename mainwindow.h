@@ -18,13 +18,14 @@ public:
   ~MainWindow();
 
 private slots:
-  void startGame();
+  // MODIFIED: startGame now accepts a Difficulty parameter
+  void startGame(Difficulty difficulty);
   void showGameOverMenu(int finalScore);
-  void updateMenuUI(); // NEW: Slot to update the main menu UI state
+  void updateMenuUI();
 
 private:
   Ui::MainWindow *ui;
   Game *game;
-  bool gameEndedOnce; // NEW: Flag to track if a game has ended
+  bool gameEndedOnce;
 };
 #endif // MAINWINDOW_H

@@ -4,7 +4,9 @@
 #include <QImage>
 #include <QPainter>
 
-Game::Game(QWidget *parent) : QGraphicsView(parent) {
+// MODIFIED: Constructor now accepts a Difficulty parameter
+Game::Game(Difficulty difficulty, QWidget *parent)
+    : QGraphicsView(parent), currentDifficulty(difficulty) {
   scene = new QGraphicsScene(this);
   scene->setSceneRect(0, 0, 400, 600);
   setScene(scene);
@@ -28,11 +30,13 @@ Game::Game(QWidget *parent) : QGraphicsView(parent) {
   scoreText = new QGraphicsTextItem();
   scoreText->setDefaultTextColor(Qt::white);
   scoreText->setZValue(100);
+  scoreText->setFont(QFont("Arial", 12)); // Set a font for better visibility
   scene->addItem(scoreText);
 
   timer = new QTimer(this);
   connect(timer, &QTimer::timeout, this, &Game::update);
 
+  setDifficultyParameters(); // NEW: Set parameters based on chosen difficulty
   resetGame();
 }
 
@@ -69,6 +73,34 @@ Game::~Game() {
 
 int Game::getScore() const { return score; }
 
+// NEW: Function to set game parameters based on difficulty
+void Game::setDifficultyParameters() {
+  switch (currentDifficulty) {
+  case Easy:
+    platformMinYSpacing = 50;
+    platformMaxYSpacing = 70;
+    platformWidth = 90;
+    jumpStrength = -15;
+    gravity = 0.4;
+    break;
+  case Normal:
+    platformMinYSpacing = 60;
+    platformMaxYSpacing = 80;
+    platformWidth = 70;
+    jumpStrength = -15;
+    gravity = 0.5;
+    break;
+  case Hard:
+    platformMinYSpacing = 70;
+    platformMaxYSpacing = 90;
+    platformWidth = 50;
+    jumpStrength =
+        -16; // Slightly weaker jump or higher initial velocity needed
+    gravity = 0.6;
+    break;
+  }
+}
+
 void Game::resetGame() {
   timer->stop();
 
@@ -78,7 +110,8 @@ void Game::resetGame() {
   }
   platforms.clear();
 
-  player->setPos(185, 500);
+  // Reset player to a specific starting position
+  player->setPos(185, 450); // Moved player up slightly for better initial view
   playerVelocityX = 0;
   playerVelocityY = 0;
   cameraY = 0;
@@ -86,9 +119,7 @@ void Game::resetGame() {
 
   score = 0;
   scoreText->setPlainText("Score: 0");
-  // Initial position for score text: X=10 (fixed), Y=10 (fixed relative to
-  // cameraY)
-  scoreText->setPos(10, cameraY + 10); // Use 10 for X, cameraY + 10 for Y
+  scoreText->setPos(10, cameraY + 10);
 
   createPlatforms();
 
@@ -96,22 +127,38 @@ void Game::resetGame() {
 }
 
 void Game::createPlatforms() {
-  QGraphicsRectItem *initialPlatform = new QGraphicsRectItem(0, 0, 70, 15);
-  initialPlatform->setBrush(Qt::green);
-  initialPlatform->setPos(player->x() - (initialPlatform->rect().width() / 2) +
-                              (player->boundingRect().width() / 2),
-                          player->y() + player->boundingRect().height());
-  scene->addItem(initialPlatform);
-  platforms.append(initialPlatform);
+  // Clear existing platforms before creating new ones (important for restart)
+  for (QGraphicsRectItem *platform : platforms) {
+    scene->removeItem(platform);
+    delete platform;
+  }
+  platforms.clear();
 
-  for (int i = 0; i < 9; ++i) {
-    QGraphicsRectItem *platform = new QGraphicsRectItem(0, 0, 70, 15);
+  // Create the first platform directly below the player
+  QGraphicsRectItem *firstPlatform =
+      new QGraphicsRectItem(0, 0, platformWidth, 15);
+  firstPlatform->setBrush(Qt::green);
+  firstPlatform->setPos(player->x() - (firstPlatform->rect().width() / 2) +
+                            (player->boundingRect().width() / 2),
+                        player->y() + player->boundingRect().height() +
+                            5); // A little lower to ensure player lands
+  scene->addItem(firstPlatform);
+  platforms.append(firstPlatform);
+
+  // Create subsequent platforms above the first one, ensuring a consistent
+  // density
+  int currentY = firstPlatform->y();
+  for (int i = 0; i < 9; ++i) { // Create 9 more platforms for a total of 10
+    QGraphicsRectItem *platform =
+        new QGraphicsRectItem(0, 0, platformWidth, 15);
     platform->setBrush(Qt::white);
 
-    int x = QRandomGenerator::global()->bounded(330);
-    int y = initialPlatform->y() - (i + 1) * 60 -
-            QRandomGenerator::global()->bounded(20);
-    platform->setPos(x, y);
+    int x = QRandomGenerator::global()->bounded(400 - platformWidth);
+    // Place new platforms within a reasonable vertical range
+    currentY -= QRandomGenerator::global()->bounded(platformMaxYSpacing -
+                                                    platformMinYSpacing) +
+                platformMinYSpacing;
+    platform->setPos(x, currentY);
 
     scene->addItem(platform);
     platforms.append(platform);
@@ -119,27 +166,44 @@ void Game::createPlatforms() {
 }
 
 void Game::spawnPlatform() {
+  // Remove platforms that have gone too far down (off-screen below the camera)
   for (int i = platforms.size() - 1; i >= 0; --i) {
-    if (platforms[i]->y() > (cameraY + scene->height())) {
+    // A platform is "off-screen" if its top edge is below the current camera
+    // view plus a buffer to ensure it's truly gone.
+    if (platforms[i]->y() >
+        (cameraY + scene->height() + 50)) { // Added 50 pixel buffer
       scene->removeItem(platforms[i]);
       delete platforms[i];
       platforms.remove(i);
     }
   }
 
-  while (platforms.size() < 10) {
-    QGraphicsRectItem *platform = new QGraphicsRectItem(0, 0, 70, 15);
+  // Add new platforms until we have a desired number (e.g., 10-15 platforms on
+  // screen)
+  while (platforms.size() <
+         15) { // Increased minimum platforms to keep the screen fuller
+    QGraphicsRectItem *platform =
+        new QGraphicsRectItem(0, 0, platformWidth, 15);
     platform->setBrush(Qt::white);
 
-    int x = QRandomGenerator::global()->bounded(330);
+    int x = QRandomGenerator::global()->bounded(400 - platformWidth);
+    // Find the highest platform's Y-coordinate to place new platforms above it
     int highestPlatformY =
-        platforms.isEmpty() ? cameraY : platforms.last()->y();
-    int y = highestPlatformY - QRandomGenerator::global()->bounded(60) - 50;
+        platforms.isEmpty()
+            ? cameraY
+            : platforms.first()
+                  ->y(); // platforms are sorted by y, highest is first
+    // Place new platform above the highest existing one, within defined spacing
+    int y = highestPlatformY - (QRandomGenerator::global()->bounded(
+                                    platformMaxYSpacing - platformMinYSpacing) +
+                                platformMinYSpacing);
 
     platform->setPos(x, y);
 
     scene->addItem(platform);
-    platforms.append(platform);
+    // Insert new platforms at the beginning of the list to keep it sorted by Y
+    // (highest first)
+    platforms.prepend(platform);
   }
 }
 
@@ -154,13 +218,14 @@ void Game::checkCollisions() {
         playerRect.right() > platformRect.left() + 5 &&
         playerRect.left() < platformRect.right() - 5 &&
         playerRect.bottom() + playerVelocityY > platformRect.top()) {
-      playerVelocityY = -15; // Jump
+      playerVelocityY =
+          jumpStrength; // Jump strength is now difficulty-dependent
       onPlatform = true;
     }
   }
 
   if (!onPlatform) {
-    playerVelocityY += 0.5;
+    playerVelocityY += gravity; // Gravity is now difficulty-dependent
   }
 }
 
@@ -197,12 +262,12 @@ void Game::update() {
 
   setSceneRect(0, cameraY, 400, 600);
 
+  // Score should increase as the camera moves up (player goes higher)
+  // The score is the negative of the camera's Y position.
   if (-cameraY > score) {
     score = -cameraY;
     scoreText->setPlainText("Score: " + QString::number(score));
   }
-  // MODIFIED LINE: X-coordinate is fixed at 10, Y-coordinate is relative to
-  // cameraY
   scoreText->setPos(10, cameraY + 10);
 
   spawnPlatform();

@@ -10,13 +10,15 @@
 #include <QTimer>
 #include <QVector>
 #include <QWidget>
-// Removed QMessageBox as it's no longer directly used by Game class for game
-// over display
+
+// Enum to define difficulty levels
+enum Difficulty { Easy, Normal, Hard };
 
 class Game : public QGraphicsView {
   Q_OBJECT
 public:
-  Game(QWidget *parent = nullptr);
+  // MODIFIED: Constructor now accepts a Difficulty parameter
+  Game(Difficulty difficulty, QWidget *parent = nullptr);
   virtual ~Game();
   void keyPressEvent(QKeyEvent *event) override;
   void keyReleaseEvent(QKeyEvent *event) override;
@@ -42,11 +44,22 @@ private:
   int score;
   QGraphicsTextItem *scoreText;
 
+  // NEW: Difficulty member variable
+  Difficulty currentDifficulty;
+  // NEW: Difficulty-dependent parameters
+  int platformMinYSpacing;
+  int platformMaxYSpacing;
+  int platformWidth;
+  double jumpStrength;
+  double gravity;
+
   void createPlatforms();
   void spawnPlatform();
   void checkCollisions();
   void gameOver();
   void resetGame();
+  // NEW: Helper function to set game parameters based on difficulty
+  void setDifficultyParameters();
 };
 
 #endif // GAME_H
