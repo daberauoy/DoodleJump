@@ -149,7 +149,8 @@ void Game::createPlatforms() {
   // Create subsequent platforms above the first one, ensuring a consistent
   // density
   int currentY = firstPlatform->y();
-  for (int i = 0; i < 9; ++i) { // Create 9 more platforms for a total of 10
+  // Only create 4 additional platforms for a total of 5 at the start
+  for (int i = 0; i < 4; ++i) {
     QGraphicsRectItem *platform =
         new QGraphicsRectItem(0, 0, platformWidth, 15);
     platform->setBrush(Qt::white);
