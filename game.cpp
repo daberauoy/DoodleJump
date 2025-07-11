@@ -4,7 +4,6 @@
 #include <QImage>
 #include <QPainter>
 
-// MODIFIED: Constructor now accepts a Difficulty parameter
 Game::Game(Difficulty difficulty, QWidget *parent)
     : QGraphicsView(parent), currentDifficulty(difficulty) {
   scene = new QGraphicsScene(this);
@@ -21,8 +20,7 @@ Game::Game(Difficulty difficulty, QWidget *parent)
   painter.drawEllipse(0, 0, 30, 30);
   player = new QGraphicsPixmapItem(QPixmap::fromImage(playerImage));
   scene->addItem(player);
-  player->setZValue(
-      1); // Set player's Z-value higher than platforms (default is 0)
+  player->setZValue(1);
 
   leftPressed = rightPressed = false;
   playerVelocityX = 0;
@@ -31,14 +29,14 @@ Game::Game(Difficulty difficulty, QWidget *parent)
 
   scoreText = new QGraphicsTextItem();
   scoreText->setDefaultTextColor(Qt::white);
-  scoreText->setZValue(100); // Score text should be on top of everything
-  scoreText->setFont(QFont("Arial", 12)); // Set a font for better visibility
+  scoreText->setZValue(100);
+  scoreText->setFont(QFont("Arial", 12));
   scene->addItem(scoreText);
 
   timer = new QTimer(this);
   connect(timer, &QTimer::timeout, this, &Game::update);
 
-  setDifficultyParameters(); // NEW: Set parameters based on chosen difficulty
+  setDifficultyParameters();
   resetGame();
 }
 
@@ -75,7 +73,6 @@ Game::~Game() {
 
 int Game::getScore() const { return score; }
 
-// NEW: Function to set game parameters based on difficulty
 void Game::setDifficultyParameters() {
   switch (currentDifficulty) {
   case Easy:
@@ -96,8 +93,7 @@ void Game::setDifficultyParameters() {
     platformMinYSpacing = 70;
     platformMaxYSpacing = 90;
     platformWidth = 50;
-    jumpStrength =
-        -16; // Slightly weaker jump or higher initial velocity needed
+    jumpStrength = -16;
     gravity = 0.6;
     break;
   }
@@ -112,8 +108,7 @@ void Game::resetGame() {
   }
   platforms.clear();
 
-  player->setPos(185, 450); // Set player to a fixed start position, Y=450 to
-                            // align with initial platforms
+  player->setPos(185, 450);
   playerVelocityX = 0;
   playerVelocityY = 0;
   cameraY = 0;
@@ -129,56 +124,42 @@ void Game::resetGame() {
 }
 
 void Game::createPlatforms() {
-  // Clear existing platforms before creating new ones (important for restart)
   for (QGraphicsRectItem *platform : platforms) {
     scene->removeItem(platform);
     delete platform;
   }
   platforms.clear();
 
-  // Create the first platform directly below the player's initial position
-  // Adjusted Y to be precisely where the player would land initially
   QGraphicsRectItem *firstPlatform =
       new QGraphicsRectItem(0, 0, platformWidth, 15);
   firstPlatform->setBrush(Qt::green);
   firstPlatform->setPos(player->x() - (firstPlatform->rect().width() / 2) +
                             (player->boundingRect().width() / 2),
-                        player->y() + player->boundingRect().height() -
-                            2); // Minor adjustment for landing
+                        player->y() + player->boundingRect().height() - 2);
   scene->addItem(firstPlatform);
-  firstPlatform->setZValue(
-      0); // Ensure platforms are behind the player (or default)
+  firstPlatform->setZValue(0);
   platforms.append(firstPlatform);
 
-  // Create subsequent platforms above the first one, ensuring a consistent
-  // density
   int currentY = firstPlatform->y();
-  // Only create 4 additional platforms for a total of 5 at the start
   for (int i = 0; i < 4; ++i) {
     QGraphicsRectItem *platform =
         new QGraphicsRectItem(0, 0, platformWidth, 15);
     platform->setBrush(Qt::white);
 
-    // Calculate Y for the new platform
     currentY -= QRandomGenerator::global()->bounded(platformMaxYSpacing -
                                                     platformMinYSpacing) +
                 platformMinYSpacing;
 
-    // Try to find a non-overlapping X position
     int x;
     bool overlapping;
-    const int maxAttempts = 100; // Prevent infinite loop in rare cases
+    const int maxAttempts = 100;
     int attempts = 0;
 
     do {
       overlapping = false;
-      x = QRandomGenerator::global()->bounded(
-          400 - platformWidth); // Generate a new X
+      x = QRandomGenerator::global()->bounded(400 - platformWidth);
 
-      // Check against existing platforms for horizontal overlap at similar Y
-      // levels Only check platforms roughly in the same vertical vicinity
       for (QGraphicsRectItem *existingPlatform : platforms) {
-        // Check if the existing platform is within a vertical range
         if (qAbs(existingPlatform->y() - currentY) < platformMaxYSpacing) {
           QRectF newPlatformRect(x, currentY, platformWidth, 15);
           QRectF existingPlatformRect =
@@ -187,7 +168,7 @@ void Game::createPlatforms() {
 
           if (newPlatformRect.intersects(existingPlatformRect)) {
             overlapping = true;
-            break; // Overlap found, try a new X
+            break;
           }
         }
       }
@@ -196,57 +177,42 @@ void Game::createPlatforms() {
 
     platform->setPos(x, currentY);
     scene->addItem(platform);
-    platform->setZValue(
-        0); // Ensure platforms are behind the player (or default)
+    platform->setZValue(0);
     platforms.append(platform);
   }
 }
 
 void Game::spawnPlatform() {
-  // Remove platforms that have gone too far down (off-screen below the camera)
   for (int i = platforms.size() - 1; i >= 0; --i) {
-    if (platforms[i]->y() >
-        (cameraY + scene->height() + 50)) { // Added 50 pixel buffer
+    if (platforms[i]->y() > (cameraY + scene->height() + 50)) {
       scene->removeItem(platforms[i]);
       delete platforms[i];
       platforms.remove(i);
     }
   }
 
-  // Add new platforms until we have a desired number (e.g., 10-15 platforms on
-  // screen)
-  while (platforms.size() <
-         15) { // Increased minimum platforms to keep the screen fuller
+  while (platforms.size() < 15) {
     QGraphicsRectItem *platform =
         new QGraphicsRectItem(0, 0, platformWidth, 15);
     platform->setBrush(Qt::white);
 
-    // Find the highest platform's Y-coordinate to place new platforms above it
     int highestPlatformY =
         platforms.isEmpty() ? cameraY : platforms.first()->y();
-    // Place new platform above the highest existing one, within defined spacing
     int y = highestPlatformY - (QRandomGenerator::global()->bounded(
                                     platformMaxYSpacing - platformMinYSpacing) +
                                 platformMinYSpacing);
 
-    // Try to find a non-overlapping X position
     int x;
     bool overlapping;
-    const int maxAttempts = 100; // Prevent infinite loop in rare cases
+    const int maxAttempts = 100;
     int attempts = 0;
 
     do {
       overlapping = false;
-      x = QRandomGenerator::global()->bounded(
-          400 - platformWidth); // Generate a new X
+      x = QRandomGenerator::global()->bounded(400 - platformWidth);
 
-      // Check against existing platforms for horizontal overlap at similar Y
-      // levels Only check platforms roughly in the same vertical vicinity
       for (QGraphicsRectItem *existingPlatform : platforms) {
-        // Check if the existing platform is within a vertical range where
-        // overlap is possible
-        if (qAbs(existingPlatform->y() - y) <
-            platformMaxYSpacing) { // Use platformMaxYSpacing as a general range
+        if (qAbs(existingPlatform->y() - y) < platformMaxYSpacing) {
           QRectF newPlatformRect(x, y, platformWidth, 15);
           QRectF existingPlatformRect =
               existingPlatform->mapToScene(existingPlatform->rect())
@@ -254,7 +220,7 @@ void Game::spawnPlatform() {
 
           if (newPlatformRect.intersects(existingPlatformRect)) {
             overlapping = true;
-            break; // Overlap found, try a new X
+            break;
           }
         }
       }
@@ -264,9 +230,7 @@ void Game::spawnPlatform() {
     platform->setPos(x, y);
 
     scene->addItem(platform);
-    platform->setZValue(0); // Ensure new platforms are behind the player
-    // Insert new platforms at the beginning of the list to keep it sorted by Y
-    // (highest first)
+    platform->setZValue(0);
     platforms.prepend(platform);
   }
 }
@@ -282,14 +246,13 @@ void Game::checkCollisions() {
         playerRect.right() > platformRect.left() + 5 &&
         playerRect.left() < platformRect.right() - 5 &&
         playerRect.bottom() + playerVelocityY > platformRect.top()) {
-      playerVelocityY =
-          jumpStrength; // Jump strength is now difficulty-dependent
+      playerVelocityY = jumpStrength;
       onPlatform = true;
     }
   }
 
   if (!onPlatform) {
-    playerVelocityY += gravity; // Gravity is now difficulty-dependent
+    playerVelocityY += gravity;
   }
 }
 
@@ -326,8 +289,6 @@ void Game::update() {
 
   setSceneRect(0, cameraY, 400, 600);
 
-  // Score should increase as the camera moves up (player goes higher)
-  // The score is the negative of the camera's Y position.
   if (-cameraY > score) {
     score = -cameraY;
     scoreText->setPlainText("Score: " + QString::number(score));
