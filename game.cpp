@@ -1,4 +1,3 @@
-// --- File: game.cpp ---
 #include "game.h"
 #include <QDebug>
 #include <QFont>
@@ -14,11 +13,9 @@ Game::Game(Difficulty difficulty, QWidget *parent)
   setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
-  // MODIFIED: Load player image from "player.png"
   QPixmap playerPixmap("sprites/player.png");
   if (playerPixmap.isNull()) {
     qDebug() << "Error: player.png not found or could not be loaded.";
-    // Fallback to a default image if loading fails
     QImage playerImage(45, 45, QImage::Format_ARGB32);
     playerImage.fill(Qt::transparent);
     QPainter painter(&playerImage);
@@ -31,11 +28,9 @@ Game::Game(Difficulty difficulty, QWidget *parent)
   scene->addItem(player);
   player->setZValue(1);
 
-  // NEW: Load background image
   QPixmap backgroundPixmap("sprites/background.png");
   if (backgroundPixmap.isNull()) {
     qDebug() << "Error: background.png not found or could not be loaded.";
-    // Fallback to a plain background if loading fails
     QImage backgroundImage(400, 600, QImage::Format_ARGB32);
     backgroundImage.fill(Qt::blue);
     backgroundPixmap = QPixmap::fromImage(backgroundImage);
@@ -43,14 +38,12 @@ Game::Game(Difficulty difficulty, QWidget *parent)
   background = new QGraphicsPixmapItem(backgroundPixmap.scaled(
       400, 600, Qt::IgnoreAspectRatio, Qt::SmoothTransformation));
   scene->addItem(background);
-  background->setZValue(-1); // Set a low Z-value so it's behind other items
+  background->setZValue(-1);
 
-  // MODIFIED: Load platform image once
   platformBasePixmap.load("sprites/platform.png");
   if (platformBasePixmap.isNull()) {
     qDebug() << "Error: platform.png not found or could not be loaded. Using "
                 "fallback.";
-    // Fallback to a simple white rectangle if image not found
     QImage fallbackPlatformImage(100, 15, QImage::Format_ARGB32);
     fallbackPlatformImage.fill(Qt::white);
     platformBasePixmap = QPixmap::fromImage(fallbackPlatformImage);
@@ -81,7 +74,6 @@ Game::~Game() {
   delete timer;
   timer = nullptr;
 
-  // MODIFIED: Platforms are QGraphicsPixmapItem
   for (QGraphicsPixmapItem *platform : platforms) {
     scene->removeItem(platform);
     delete platform;
@@ -100,7 +92,6 @@ Game::~Game() {
     scoreText = nullptr;
   }
 
-  // NEW: Delete background item
   if (background) {
     scene->removeItem(background);
     delete background;
@@ -111,7 +102,6 @@ Game::~Game() {
     delete scene;
     scene = nullptr;
   }
-  // platformBasePixmap is a QPixmap object, no explicit deletion needed.
 }
 
 int Game::getScore() const { return score; }
@@ -145,7 +135,6 @@ void Game::setDifficultyParameters() {
 void Game::resetGame() {
   timer->stop();
 
-  // MODIFIED: Platforms are QGraphicsPixmapItem
   for (QGraphicsPixmapItem *platform : platforms) {
     scene->removeItem(platform);
     delete platform;
@@ -157,7 +146,6 @@ void Game::resetGame() {
   playerVelocityY = 0;
   cameraY = 0;
   setSceneRect(0, cameraY, 400, 600);
-  // NEW: Reset background position
   background->setPos(0, cameraY);
 
   score = 0;
@@ -170,14 +158,12 @@ void Game::resetGame() {
 }
 
 void Game::createPlatforms() {
-  // MODIFIED: Platforms are QGraphicsPixmapItem
   for (QGraphicsPixmapItem *platform : platforms) {
     scene->removeItem(platform);
     delete platform;
   }
   platforms.clear();
 
-  // MODIFIED: Create first platform using QGraphicsPixmapItem
   QGraphicsPixmapItem *firstPlatform =
       new QGraphicsPixmapItem(platformBasePixmap.scaled(
           platformWidth, 15, Qt::IgnoreAspectRatio, Qt::SmoothTransformation));
@@ -191,7 +177,6 @@ void Game::createPlatforms() {
 
   int currentY = firstPlatform->y();
   for (int i = 0; i < 4; ++i) {
-    // MODIFIED: Create platforms using QGraphicsPixmapItem
     QGraphicsPixmapItem *platform = new QGraphicsPixmapItem(
         platformBasePixmap.scaled(platformWidth, 15, Qt::IgnoreAspectRatio,
                                   Qt::SmoothTransformation));
@@ -209,12 +194,9 @@ void Game::createPlatforms() {
       overlapping = false;
       x = QRandomGenerator::global()->bounded(400 - platformWidth);
 
-      // MODIFIED: Use boundingRect() for QGraphicsPixmapItem for intersection
-      // check
       for (QGraphicsPixmapItem *existingPlatform : platforms) {
         if (qAbs(existingPlatform->y() - currentY) < platformMaxYSpacing) {
-          QRectF newPlatformRect(x, currentY, platformWidth,
-                                 15); // Use platformWidth for new rect
+          QRectF newPlatformRect(x, currentY, platformWidth, 15);
           QRectF existingPlatformRect =
               existingPlatform->mapToScene(existingPlatform->boundingRect())
                   .boundingRect();
@@ -236,7 +218,6 @@ void Game::createPlatforms() {
 }
 
 void Game::spawnPlatform() {
-  // MODIFIED: Platforms are QGraphicsPixmapItem
   for (int i = platforms.size() - 1; i >= 0; --i) {
     if (platforms[i]->y() > (cameraY + scene->height() + 50)) {
       scene->removeItem(platforms[i]);
@@ -246,7 +227,6 @@ void Game::spawnPlatform() {
   }
 
   while (platforms.size() < 15) {
-    // MODIFIED: Create platforms using QGraphicsPixmapItem
     QGraphicsPixmapItem *platform = new QGraphicsPixmapItem(
         platformBasePixmap.scaled(platformWidth, 15, Qt::IgnoreAspectRatio,
                                   Qt::SmoothTransformation));
@@ -266,12 +246,9 @@ void Game::spawnPlatform() {
       overlapping = false;
       x = QRandomGenerator::global()->bounded(400 - platformWidth);
 
-      // MODIFIED: Use boundingRect() for QGraphicsPixmapItem for intersection
-      // check
       for (QGraphicsPixmapItem *existingPlatform : platforms) {
         if (qAbs(existingPlatform->y() - y) < platformMaxYSpacing) {
-          QRectF newPlatformRect(x, y, platformWidth,
-                                 15); // Use platformWidth for new rect
+          QRectF newPlatformRect(x, y, platformWidth, 15);
           QRectF existingPlatformRect =
               existingPlatform->mapToScene(existingPlatform->boundingRect())
                   .boundingRect();
@@ -297,7 +274,6 @@ void Game::checkCollisions() {
   bool onPlatform = false;
   QRectF playerRect = player->mapToScene(player->boundingRect()).boundingRect();
 
-  // MODIFIED: Iterate over QGraphicsPixmapItem for platforms
   for (QGraphicsPixmapItem *platform : platforms) {
     QRectF platformRect =
         platform->mapToScene(platform->boundingRect()).boundingRect();
@@ -345,7 +321,6 @@ void Game::update() {
   if (playerYInScene < cameraY + targetPlayerYInView) {
     int delta = (cameraY + targetPlayerYInView) - playerYInScene;
     cameraY -= delta;
-    // NEW: Adjust background position with camera
     background->setY(cameraY);
   }
 

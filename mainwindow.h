@@ -18,7 +18,6 @@ public:
   ~MainWindow();
 
 private slots:
-  // MODIFIED: startGame now accepts a Difficulty parameter
   void startGame(Difficulty difficulty);
   void showGameOverMenu(int finalScore);
   void updateMenuUI();
@@ -28,4 +27,4 @@ private:
   Game *game;
   bool gameEndedOnce;
 };
-#endif // MAINWINDOW_H
+#endif
