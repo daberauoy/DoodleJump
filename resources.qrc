@@ -3,5 +3,6 @@
         <file>sprites/platform.png</file>
         <file>sprites/player.png</file>
         <file>sprites/background.png</file>
+        <file>sprites/background_menu.png</file>
     </qresource>
 </RCC>

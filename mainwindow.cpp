@@ -9,16 +9,22 @@ MainWindow::MainWindow(QWidget *parent)
       gameEndedOnce(false) {
   ui->setupUi(this);
 
-  // === MODIFICATION START ===
   // Hide the status bar to prevent it from appearing as a "line" at the bottom
   if (ui->statusbar) {
     ui->statusbar->hide();
-    // Alternatively, to remove it completely from the QMainWindow:
-    // setStatusBar(nullptr);
   }
-  // === MODIFICATION END ===
 
   ui->stackedWidget->setCurrentIndex(0);
+
+  // === NEW: Set background for startMenuPage using stylesheet ===
+  ui->startMenuPage->setStyleSheet(
+      "QWidget#startMenuPage { background-image: "
+      "url(:/sprites/background_menu.png);"
+      "background-position: center;"
+      "background-repeat: no-repeat;"
+      "background-size: cover; }" // Use cover to make it fill the space
+  );
+  // =============================================================
 
   // Connect startButton to startGame, reading difficulty from ComboBox
   connect(ui->startButton, &QPushButton::clicked, this, [this]() {
@@ -83,7 +89,7 @@ void MainWindow::updateMenuUI() {
         true); // Show difficulty selection on restart
     ui->difficultyComboBox->setVisible(true);
   } else {
-    ui->startButton->setText("Start Game");
+    ui->startButton->setText("Start Game"); // Changed from "" to "Start Game"
     ui->scoreDisplayLabel->setText("");
     ui->scoreDisplayLabel->setVisible(false);
     ui->difficultyLabel->setVisible(
