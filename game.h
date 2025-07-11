@@ -1,7 +1,7 @@
 #ifndef GAME_H
 #define GAME_H
 
-#include <QGraphicsPixmapItem>
+#include <QGraphicsPixmapItem> // Include for QGraphicsPixmapItem
 #include <QGraphicsScene>
 #include <QGraphicsView>
 #include <QKeyEvent>
@@ -36,7 +36,8 @@ signals:
 private:
   QGraphicsScene *scene;
   QGraphicsPixmapItem *player;
-  QVector<QGraphicsRectItem *> platforms;
+  // MODIFIED: Platforms are now QGraphicsPixmapItem
+  QVector<QGraphicsPixmapItem *> platforms;
   QTimer *timer;
   bool leftPressed, rightPressed;
   double playerVelocityX, playerVelocityY;
@@ -55,6 +56,9 @@ private:
   int platformWidth;
   double jumpStrength;
   double gravity;
+
+  // NEW: QPixmap to store the base platform image
+  QPixmap platformBasePixmap;
 
   void createPlatforms();
   void spawnPlatform();
