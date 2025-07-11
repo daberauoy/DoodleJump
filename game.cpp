@@ -4,6 +4,7 @@
 #include <QImage>
 #include <QPainter>
 
+// MODIFIED: Constructor now accepts a Difficulty parameter
 Game::Game(Difficulty difficulty, QWidget *parent)
     : QGraphicsView(parent), currentDifficulty(difficulty) {
   scene = new QGraphicsScene(this);
