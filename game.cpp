@@ -15,7 +15,7 @@ Game::Game(Difficulty difficulty, QWidget *parent)
   setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
   // MODIFIED: Load player image from "player.png"
-  QPixmap playerPixmap("player.png");
+  QPixmap playerPixmap("sprites/player.png");
   if (playerPixmap.isNull()) {
     qDebug() << "Error: player.png not found or could not be loaded.";
     // Fallback to a default image if loading fails
