@@ -53,7 +53,7 @@ Game::Game(Difficulty difficulty, QWidget *parent)
   scoreText = new QGraphicsTextItem();
   scoreText->setDefaultTextColor(Qt::white);
   scoreText->setZValue(100);
-  scoreText->setFont(QFont("Arial", 12));
+  scoreText->setFont(QFont("Arial", 14));
   scene->addItem(scoreText);
 
   timer = new QTimer(this);
