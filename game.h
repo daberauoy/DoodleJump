@@ -44,6 +44,9 @@ private:
   int score;
   QGraphicsTextItem *scoreText;
 
+  // NEW: Background item
+  QGraphicsPixmapItem *background;
+
   // NEW: Difficulty member variable
   Difficulty currentDifficulty;
   // NEW: Difficulty-dependent parameters

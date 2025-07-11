@@ -2,6 +2,6 @@
     <qresource prefix="/">
 <!--        <file>sprites/platform.png</file>-->
         <file>sprites/player.png</file>
-<!--        <file>sprites/background.png</file>-->
+        <file>sprites/background.png</file>
     </qresource>
 </RCC>

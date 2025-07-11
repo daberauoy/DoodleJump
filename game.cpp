@@ -31,6 +31,20 @@ Game::Game(Difficulty difficulty, QWidget *parent)
   scene->addItem(player);
   player->setZValue(1);
 
+  // NEW: Load background image
+  QPixmap backgroundPixmap("sprites/background.png");
+  if (backgroundPixmap.isNull()) {
+    qDebug() << "Error: background.png not found or could not be loaded.";
+    // Fallback to a plain background if loading fails
+    QImage backgroundImage(400, 600, QImage::Format_ARGB32);
+    backgroundImage.fill(Qt::blue);
+    backgroundPixmap = QPixmap::fromImage(backgroundImage);
+  }
+  background = new QGraphicsPixmapItem(backgroundPixmap.scaled(
+      400, 600, Qt::IgnoreAspectRatio, Qt::SmoothTransformation));
+  scene->addItem(background);
+  background->setZValue(-1); // Set a low Z-value so it's behind other items
+
   leftPressed = rightPressed = false;
   playerVelocityX = 0;
   playerVelocityY = 0;
@@ -72,6 +86,13 @@ Game::~Game() {
     scene->removeItem(scoreText);
     delete scoreText;
     scoreText = nullptr;
+  }
+
+  // NEW: Delete background item
+  if (background) {
+    scene->removeItem(background);
+    delete background;
+    background = nullptr;
   }
 
   if (scene) {
@@ -122,6 +143,8 @@ void Game::resetGame() {
   playerVelocityY = 0;
   cameraY = 0;
   setSceneRect(0, cameraY, 400, 600);
+  // NEW: Reset background position
+  background->setPos(0, cameraY);
 
   score = 0;
   scoreText->setPlainText("Score: 0");
@@ -294,6 +317,8 @@ void Game::update() {
   if (playerYInScene < cameraY + targetPlayerYInView) {
     int delta = (cameraY + targetPlayerYInView) - playerYInScene;
     cameraY -= delta;
+    // NEW: Adjust background position with camera
+    background->setY(cameraY);
   }
 
   setSceneRect(0, cameraY, 400, 600);
