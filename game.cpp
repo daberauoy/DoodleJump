@@ -21,6 +21,8 @@ Game::Game(Difficulty difficulty, QWidget *parent)
   painter.drawEllipse(0, 0, 30, 30);
   player = new QGraphicsPixmapItem(QPixmap::fromImage(playerImage));
   scene->addItem(player);
+  player->setZValue(
+      1); // Set player's Z-value higher than platforms (default is 0)
 
   leftPressed = rightPressed = false;
   playerVelocityX = 0;
@@ -29,7 +31,7 @@ Game::Game(Difficulty difficulty, QWidget *parent)
 
   scoreText = new QGraphicsTextItem();
   scoreText->setDefaultTextColor(Qt::white);
-  scoreText->setZValue(100);
+  scoreText->setZValue(100); // Score text should be on top of everything
   scoreText->setFont(QFont("Arial", 12)); // Set a font for better visibility
   scene->addItem(scoreText);
 
@@ -144,6 +146,8 @@ void Game::createPlatforms() {
                         player->y() + player->boundingRect().height() -
                             2); // Minor adjustment for landing
   scene->addItem(firstPlatform);
+  firstPlatform->setZValue(
+      0); // Ensure platforms are behind the player (or default)
   platforms.append(firstPlatform);
 
   // Create subsequent platforms above the first one, ensuring a consistent
@@ -192,6 +196,8 @@ void Game::createPlatforms() {
 
     platform->setPos(x, currentY);
     scene->addItem(platform);
+    platform->setZValue(
+        0); // Ensure platforms are behind the player (or default)
     platforms.append(platform);
   }
 }
@@ -258,6 +264,7 @@ void Game::spawnPlatform() {
     platform->setPos(x, y);
 
     scene->addItem(platform);
+    platform->setZValue(0); // Ensure new platforms are behind the player
     // Insert new platforms at the beginning of the list to keep it sorted by Y
     // (highest first)
     platforms.prepend(platform);
