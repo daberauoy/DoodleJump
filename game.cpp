@@ -1,3 +1,4 @@
+// --- File: game.cpp ---
 #include "game.h"
 #include <QDebug>
 #include <QFont>
@@ -13,12 +14,20 @@ Game::Game(Difficulty difficulty, QWidget *parent)
   setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
-  QImage playerImage(30, 30, QImage::Format_ARGB32);
-  playerImage.fill(Qt::transparent);
-  QPainter painter(&playerImage);
-  painter.setBrush(Qt::green);
-  painter.drawEllipse(0, 0, 30, 30);
-  player = new QGraphicsPixmapItem(QPixmap::fromImage(playerImage));
+  // MODIFIED: Load player image from "player.png"
+  QPixmap playerPixmap("player.png");
+  if (playerPixmap.isNull()) {
+    qDebug() << "Error: player.png not found or could not be loaded.";
+    // Fallback to a default image if loading fails
+    QImage playerImage(45, 45, QImage::Format_ARGB32);
+    playerImage.fill(Qt::transparent);
+    QPainter painter(&playerImage);
+    painter.setBrush(Qt::green);
+    painter.drawEllipse(0, 0, 45, 45);
+    playerPixmap = QPixmap::fromImage(playerImage);
+  }
+  player = new QGraphicsPixmapItem(playerPixmap.scaled(
+      45, 45, Qt::KeepAspectRatio, Qt::SmoothTransformation));
   scene->addItem(player);
   player->setZValue(1);
 
