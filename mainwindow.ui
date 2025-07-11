@@ -152,6 +152,20 @@
           <property name="text">
            <string>Start Game</string>
           </property>
+          <property name="styleSheet">
+           <string>
+            QPushButton {
+                background-color: #4CAF50; /* Green */
+                color: white;
+                border-radius: 10px;
+                padding: 10px 20px;
+                border: none;
+            }
+            QPushButton:hover {
+                background-color: #45a049; /* Darker green on hover */
+            }
+           </string>
+          </property>
          </widget>
         </item>
         <item>
