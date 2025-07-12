@@ -30,6 +30,7 @@ MainWindow::MainWindow(QWidget *parent)
 
   updateMenuUI();
   setFixedSize(400, 600);
+  setWindowTitle("Doodle Jump!");
 }
 
 MainWindow::~MainWindow() {
